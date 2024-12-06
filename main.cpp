@@ -11,12 +11,9 @@ unsigned long motionDetectedTime = 0;
 unsigned long lightOnTime = 0;
 unsigned long lastMotionTime = 0;
 
-/**
- * Initializes the pin modes for the fan, motion detector, and LED light.
- * Sets the fan and light pins as OUTPUT and the motion detector pin as INPUT.
- */
 void setup() {
-  pinMode(fanPin, OUTPUT);
+  ledcSetup(0, 25000, 8);  // Set up PWM channel 0
+  ledcAttachPin(fanPin, 0);  // Attach fan pin to PWM channel 0
   pinMode(motionPin, INPUT);
   pinMode(lightPin, OUTPUT);
 }
@@ -26,8 +23,7 @@ void loop() {
 
   if (motionState == HIGH && !fanIsRunning) {
     // Motion detected and fan is not running, turn on fan and light
-    digitalWrite(fanPin, HIGH);  // Start fan at low speed
-    analogWrite(fanPin, 128);  // Set fan speed to 50%
+    ledcWrite(0, 128);  // Set fan speed to 50%
     digitalWrite(lightPin, HIGH);  // Turn on 5V LED
     fanIsRunning = true;
     lightIsOn = true;
@@ -45,17 +41,17 @@ void loop() {
 
   if (fanIsRunning && (millis() - motionDetectedTime) < 300000) {
     // Fan is running and motion was detected less than 5 minutes ago, increase fan speed
-    analogWrite(fanPin, map(millis() - motionDetectedTime, 0, 300000, 128, 255));
+    ledcWrite(0, map(millis() - motionDetectedTime, 0, 300000, 128, 255));
   }
 
   if (fanIsRunning && (millis() - fanStartTime) >= 300000) {
     // Fan has been running for 5 minutes, set fan speed to 100%
-    analogWrite(fanPin, 255);
+    ledcWrite(0, 255);
   }
 
   if (fanIsRunning && (millis() - fanStartTime) >= 7200000) {
     // Fan has been running for 2 hours, turn it off
-    digitalWrite(fanPin, LOW);
+    ledcWrite(0, 0);
     fanIsRunning = false;
   }
 
